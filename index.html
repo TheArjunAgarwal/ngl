@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Me an Anonymous Message</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #FDBE02, #FF8040); /* Dark gradient background */
+        }
+        /* Custom styles for better textarea focus */
+        .custom-textarea:focus {
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.5); /* orange-300 with opacity */
+            border-color: #a78bfa; /* orange-400 */
+        }
+    </style>
+</head>
+<body class="text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-sm mx-auto">
+        <div class="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-8 shadow-2xl shadow-orange-500/10 transform transition-all hover:scale-[1.01] duration-300">
+            
+            <!-- Header Section -->
+            <div class="text-center mb-6">
+                <!-- Profile Picture -->
+                <!-- IMPORTANT: Replace the src below with a direct link to your profile picture -->
+                <img 
+                    src="profile-pic.png" 
+                    alt="Profile Picture"
+                    class="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-gray-700 object-cover shadow-lg"
+                    onerror="this.onerror=null; this.src='https://placehold.co/100x100/7c3aed/ffffff?text=You';"
+                >
+                <h1 class="text-2xl font-bold text-white">Actually Anonymous Messages</h1>
+                <a href="https://www.instagram.com/thearjunagarwal/" target="_blank"><p class="text-gray-400">@TheArjunAgarwal</p></a>
+            </div>
+            
+            <p class="text-center text-gray-300 mb-6">Send me an anonymous message!</p>
+
+            <!-- Form -->
+            <form id="form" class="space-y-6">
+
+                <!-- 
+                    IMPORTANT: Replace "YOUR_ACCESS_KEY_HERE" with your actual Access Key from web3forms.com 
+                -->
+                <input type="hidden" name="access_key" value="YOUR_ACCESS_KEY_HERE">
+                
+                <!-- Form metadata -->
+                <input type="hidden" name="subject" value="New Anonymous Message for @yourusername!">
+                <input type="hidden" name="from_name" value="Anonymous">
+
+                <!-- Message Textarea -->
+                <div>
+                    <label for="message" class="sr-only">Your message</label>
+                    <textarea 
+                        id="message"
+                        name="message" 
+                        rows="5" 
+                        class="custom-textarea w-full p-4 bg-gray-900 border-2 border-gray-700 rounded-lg text-gray-200 placeholder-gray-500 focus:outline-none focus:border-orange-400 transition-colors duration-300"
+                        placeholder="Leave a secret message..."
+                        required
+                    ></textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50">
+                    Send Message
+                </button>
+            </form>
+            
+            <!-- Result message area -->
+            <div id="result" class="mt-4 text-center font-medium"></div>
+
+        </div>
+        <footer class="text-center mt-6 text-gray-500 text-sm">
+            <p>Powered by <a href="https://web3forms.com" target="_blank" class="hover:text-orange-400">Web3Forms</a></p>
+        </footer>
+    </div>
+
+    <script>
+        const form = document.getElementById('form');
+        const result = document.getElementById('result');
+
+        form.addEventListener('submit', function(e) {
+            const formData = new FormData(form);
+            e.preventDefault();
+
+            // Check if the user has replaced the placeholder access key
+            const accessKey = formData.get('access_key');
+            if (accessKey === 'YOUR_ACCESS_KEY_HERE') {
+                result.innerHTML = '<span class="text-red-400">Error: Page owner needs to configure the access key.</span>';
+                return;
+            }
+
+            // Show 'Sending...' message and make it visible
+            result.style.display = 'block';
+            result.innerHTML = '<span class="text-yellow-400">Sending...</span>';
+            const object = {};
+            formData.forEach((value, key) => {
+                object[key] = value;
+            });
+            const json = JSON.stringify(object);
+
+            fetch('https://api.web3forms.com/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: json
+                })
+                .then(async (response) => {
+                    let jsonResponse = await response.json();
+                    if (response.status == 200) {
+                        result.innerHTML = `<span class="text-green-400">${jsonResponse.message}</span>`;
+                    } else {
+                        console.log(response);
+                        result.innerHTML = `<span class="text-red-400">${jsonResponse.message}</span>`;
+                    }
+                })
+                .catch(error => {
+                    console.log(error);
+                    result.innerHTML = `<span class="text-red-400">Something went wrong!</span>`;
+                })
+                .then(function() {
+                    form.reset();
+                    setTimeout(() => {
+                        result.style.display = 'none';
+                    }, 5000); // Increased timeout to 5 seconds
+                });
+        });
+    </script>
+
+</body>
+</html>
+
