@@ -59,7 +59,7 @@
                 <button 
                     type="submit" 
                     id="submitBtn"
-                    class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50"
+                    class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     Send Message
                 </button>
@@ -70,7 +70,7 @@
 
         </div>
         <footer class="text-center mt-6 text-gray-500 text-sm">
-            <p>Simple, native PHP form submission</p>
+            <p>Powered by Vercel</p>
         </footer>
     </div>
 
@@ -97,7 +97,7 @@
             result.innerHTML = '<span class="text-yellow-400">Sending...</span>';
 
             try {
-                const response = await fetch('./submit-message.php', {
+                const response = await fetch('/api/submit-message', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
