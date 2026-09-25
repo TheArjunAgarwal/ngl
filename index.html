@@ -13,12 +13,11 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #FDBE02, #FF8040); /* Dark gradient background */
+            background: linear-gradient(135deg, #FDBE02, #FF8040);
         }
-        /* Custom styles for better textarea focus */
         .custom-textarea:focus {
-            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.5); /* orange-300 with opacity */
-            border-color: #a78bfa; /* orange-400 */
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.5);
+            border-color: #a78bfa;
         }
     </style>
 </head>
@@ -29,8 +28,6 @@
             
             <!-- Header Section -->
             <div class="text-center mb-6">
-                <!-- Profile Picture -->
-                <!-- IMPORTANT: Replace the src below with a direct link to your profile picture -->
                 <img 
                     src="profile-pic.png" 
                     alt="Profile Picture"
@@ -45,16 +42,6 @@
 
             <!-- Form -->
             <form id="form" class="space-y-6">
-
-                <!-- 
-                    IMPORTANT: Replace "YOUR_ACCESS_KEY_HERE" with your actual Access Key from web3forms.com 
-                -->
-                <input type="hidden" name="access_key" value="809dccca-d3c7-422f-9d6a-5f4eb1453848">
-                
-                <!-- Form metadata -->
-                <input type="hidden" name="subject" value="New Anonymous Message for @thearjunagarwal!">
-                <input type="hidden" name="from_name" value="Anonymous">
-
                 <!-- Message Textarea -->
                 <div>
                     <label for="message" class="sr-only">Your message</label>
@@ -69,74 +56,77 @@
                 </div>
 
                 <!-- Submit Button -->
-                <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50">
+                <button 
+                    type="submit" 
+                    id="submitBtn"
+                    class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-500 focus:ring-opacity-50"
+                >
                     Send Message
                 </button>
             </form>
             
             <!-- Result message area -->
-            <div id="result" class="mt-4 text-center font-medium"></div>
+            <div id="result" class="mt-4 text-center font-medium hidden"></div>
 
         </div>
         <footer class="text-center mt-6 text-gray-500 text-sm">
-            <p>Powered by <a href="https://web3forms.com" target="_blank" class="hover:text-orange-400">Web3Forms</a></p>
+            <p>Simple, native PHP form submission</p>
         </footer>
     </div>
 
     <script>
         const form = document.getElementById('form');
         const result = document.getElementById('result');
+        const submitBtn = document.getElementById('submitBtn');
 
-        form.addEventListener('submit', function(e) {
-            const formData = new FormData(form);
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Check if the user has replaced the placeholder access key
-            const accessKey = formData.get('access_key');
-            if (accessKey === 'YOUR_ACCESS_KEY_HERE') {
-                result.innerHTML = '<span class="text-red-400">Error: Page owner needs to configure the access key.</span>';
+            const message = document.getElementById('message').value.trim();
+
+            if (!message) {
+                result.classList.remove('hidden');
+                result.innerHTML = '<span class="text-red-400">Please enter a message</span>';
                 return;
             }
 
-            // Show 'Sending...' message and make it visible
-            result.style.display = 'block';
+            // Disable button and show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            result.classList.remove('hidden');
             result.innerHTML = '<span class="text-yellow-400">Sending...</span>';
-            const object = {};
-            formData.forEach((value, key) => {
-                object[key] = value;
-            });
-            const json = JSON.stringify(object);
 
-            fetch('https://api.web3forms.com/submit', {
+            try {
+                const response = await fetch('./submit-message.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Accept': 'application/json'
                     },
-                    body: json
-                })
-                .then(async (response) => {
-                    let jsonResponse = await response.json();
-                    if (response.status == 200) {
-                        result.innerHTML = `<span class="text-green-400">${jsonResponse.message}</span>`;
-                    } else {
-                        console.log(response);
-                        result.innerHTML = `<span class="text-red-400">${jsonResponse.message}</span>`;
-                    }
-                })
-                .catch(error => {
-                    console.log(error);
-                    result.innerHTML = `<span class="text-red-400">Something went wrong!</span>`;
-                })
-                .then(function() {
+                    body: JSON.stringify({
+                        message: message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    result.innerHTML = `<span class="text-green-400">${data.message}</span>`;
                     form.reset();
                     setTimeout(() => {
-                        result.style.display = 'none';
-                    }, 5000); // Increased timeout to 5 seconds
-                });
+                        result.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    result.innerHTML = `<span class="text-red-400">${data.message || 'Something went wrong'}</span>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                result.innerHTML = '<span class="text-red-400">Network error. Please try again.</span>';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Message';
+            }
         });
     </script>
 
 </body>
 </html>
-
