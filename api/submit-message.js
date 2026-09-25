@@ -57,16 +57,118 @@ export default async function handler(req, res) {
     }
 
     // Prepare email content
-    const emailSubject = `New Anonymous Message - ${new Date().toLocaleString()}`;
+    const emailSubject = `New Anonymous Message`;
+    const receivedTime = new Date().toLocaleString();
+    const senderIP = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'Unknown';
+
     const emailBody = `
-Anonymous Message Received:
+Anonymous Message:
 
 ${sanitizedMessage}
 
 ---
-Received: ${new Date().toLocaleString()}
-IP: ${req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'Unknown'}
+Received: ${receivedTime}
+IP: ${senderIP}
     `.trim();
+
+    // HTML email template styled like NGL message card
+    const htmlTemplate = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #FDBE02, #FF8040);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #1f2937;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 8px 0 0 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .message-card {
+            background: linear-gradient(135deg, #FDBE02, #FF8040);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            color: white;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(253, 190, 2, 0.3);
+        }
+        .message-text {
+            font-size: 16px;
+            line-height: 1.6;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            font-weight: 500;
+        }
+        .metadata {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 24px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+        .metadata p {
+            margin: 8px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎉 New Anonymous Message</h1>
+            <p>You received a message on your form</p>
+        </div>
+        
+        <div class="message-card">
+            <div class="message-text">${sanitizedMessage}</div>
+        </div>
+        
+        <div class="metadata">
+            <p><strong>Received:</strong> ${receivedTime}</p>
+            <p><strong>Sender IP:</strong> ${senderIP}</p>
+        </div>
+        
+        <div class="footer">
+            <p>Reply to this email or visit your form to respond</p>
+        </div>
+    </div>
+</body>
+</html>
+    `;
 
     // Send email
     await transporter.sendMail({
@@ -74,7 +176,7 @@ IP: ${req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'Unknown'}
       to: recipientEmail,
       subject: emailSubject,
       text: emailBody,
-      html: `<pre>${emailBody.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>`,
+      html: htmlTemplate,
     });
 
     return res.status(200).json({
@@ -82,10 +184,18 @@ IP: ${req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'Unknown'}
       message: 'Message sent successfully!',
     });
   } catch (error) {
-    console.error('Error sending message:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to send message. Please try again later.',
-    });
+    const errorMessage = error?.message || 'Unknown error';
+    console.error('Error sending message:', errorMessage);
+    console.error('Error stack:', error?.stack);
+    
+    try {
+      return res.status(500).json({
+        success: false,
+        message: errorMessage,
+      });
+    } catch (jsonError) {
+      // Fallback if JSON encoding fails
+      return res.status(500).send(`Error: ${errorMessage}`);
+    }
   }
 }
