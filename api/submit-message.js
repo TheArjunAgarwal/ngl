@@ -82,12 +82,10 @@ IP: ${req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || 'Unknown'}
       message: 'Message sent successfully!',
     });
   } catch (error) {
-    console.error('Error sending message:', error.message);
-    console.error('Error stack:', error.stack);
+    console.error('Error sending message:', error);
     return res.status(500).json({
       success: false,
-      message: `Error: ${error.message}`,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      message: 'Failed to send message. Please try again later.',
     });
   }
 }
