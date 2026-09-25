@@ -1,9 +1,9 @@
 {
-  "buildCommand": "npm install",
-  "functions": {
-    "api/**/*.js": {
-      "memory": 1024,
-      "maxDuration": 10
-    }
+  "name": "anonymous-messages",
+  "version": "1.0.0",
+  "description": "Anonymous message form for Vercel",
+  "private": true,
+  "dependencies": {
+    "nodemailer": "^6.9.7"
   }
 }
